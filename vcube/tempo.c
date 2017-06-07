@@ -28,7 +28,7 @@ typedef struct tnodo
 {
 	int id;
 	int *STATE;
- int current_cluster;
+	int current_cluster;
 	int current_node; // Indica proximo nodo dentro do cluster que tera seu CIS testado.
 	int source_node; // Indica qual o nodo que transmitiu informações recentemente.
 	int cluster_index; // Indica qual o cluster do qual recebeu a transmissão.
@@ -297,34 +297,37 @@ int main(int argc, char * argv[])
 			case TEST:
 				if (status(nodo[token].id) != 0) break;
 				int did_test = 0;
-    node_set *cis_teste = cis(token, nodo[token].current_cluster+1);
+    			node_set *cis_teste = cis(token, nodo[token].current_cluster+1);
 
-				while(!did_test) {
+				while(!did_test) 
+				{
 				    int st;
-        int token2 = cis_teste->nodes[nodo[token].current_node];
-								// Enquanto o nodo não achou o próximo nodo que deve testar,
-								// continua procurando o mesmo na tabela do cis.
-        if(token != token2 && is_testador(token, token2)) {
-            testarNodo(token, token2, num_testes);
-            did_test = 1;
-        }
-        nodo[token].current_node++;
-        nodo[token].current_node %= cis_teste->size;
-        if(nodo[token].current_node == 0) {
-            // voltou ao começo, incrementa o cluster atual
-            nodo[token].current_cluster++;
-            nodo[token].current_cluster %= num_clusters;
-            // e recalcula o CIS
-            cis_teste = cis(token, nodo[token].current_cluster+1);
-        }
+        			int token2 = cis_teste->nodes[nodo[token].current_node];
+					// Enquanto o nodo não achou o próximo nodo que deve testar,
+					// continua procurando o mesmo na tabela do cis.
+			        if(token != token2 && is_testador(token, token2)) 
+			        {
+			            testarNodo(token, token2, num_testes);
+			            did_test = 1;
+			        }
+			        nodo[token].current_node++;
+			        nodo[token].current_node %= cis_teste->size;
+			        if(nodo[token].current_node == 0) 
+			        {
+			            // voltou ao começo, incrementa o cluster atual
+			            nodo[token].current_cluster++;
+			            nodo[token].current_cluster %= num_clusters;
+			            // e recalcula o CIS
+			            cis_teste = cis(token, nodo[token].current_cluster+1);
+			        }
 				}
 				// Testa todos os nodos até encontrar um sem falha.
 				schedule(TEST, 30.0, token);
-				break;
+			break;
 
 			case FAULT:
 				r = request(nodo[token].id, token, 0);
-				if(r != 0)
+				if (r != 0)
 				{
 					puts("Nao consegui falhar nodo");
 					exit(1);
@@ -334,7 +337,7 @@ int main(int argc, char * argv[])
 				nodosFalhos++;
 				contador = 0;
 				ja_diagnosticou = 0;
-				break;
+			break;
 
 			case REPAIR:
 				release(nodo[token].id, token);
@@ -344,37 +347,32 @@ int main(int argc, char * argv[])
 				nodosFalhos--;
 				contador = 0;
 				ja_diagnosticou = 0;
-				break;
+			break;
 
-				//Evento criado para o primeiro nodo iniciar a difusão de informações.
-				case BROADCAST:
-						//O nodo X iniciou os broadcasts, transmitindo para os nodos [...]
-						int i;
-						node_set *cis_teste = cis(token, nodo[token].current_cluster+1);
-						//Encontra o primeiro nodo sem falha de cis
-						for (i=0; i<cis_teste->size && status(cis_teste->nodes[i]) != 0; ++i)
-											;
-						if (i<cis_teste->size)
-						{
-							//Encontrou um nodo sem falha no cluster.
-							int alvo = cis_teste->nodes[i];
-							alvo.source_node = nodo[token].id;
-							alvo.cluster_index = 0; //@KAIO Qual o cluster de um nodo?
-							//O nodo alvo receberá a mensagem após um tempo fixo?
-							schedule(RECEIVE, tempo+1.0, alvo);
-						}
-						else
-						{
-							//Não encontrou nodo sem falha no cluster.
-						}
-				break;
+			case BROADCAST:
+			{
+				//O nodo X iniciou os broadcasts, transmitindo para os nodos [...]
+				int i;
+				node_set *cis_teste = cis(token, nodo[token].current_cluster+1);
+				//Encontra o primeiro nodo sem falha de cis
+				for (i=0; i<cis_teste->size && status(cis_teste->nodes[i]) != 0; ++i);
 
-				//Evento criado para um nodo repetir as informações recebidas.
-				case RECEIVE:
-						//O nodo X recebeu informações do nodo Y e repetiu para os nodos [...]
-						//Faz basicamente a mesma coisa que o broadcast, talvez dê pra juntar os dois eventos em um só.
-				break;
+				if (i<cis_teste->size)
+				{
+					//Encontrou um nodo sem falha no cluster.
+					int alvo = cis_teste->nodes[i];
+					nodo[alvo].source_node = nodo[token].id;
+					nodo[alvo].cluster_index = 0; //@KAIO Qual o cluster de um nodo?
+					//O nodo alvo receberá a mensagem após um tempo fixo?
+					schedule(RECEIVE, 1.0, alvo);
+				}
+				else
+				{
+					//Não encontrou nodo sem falha no cluster.
+				}
 			}
+			break;
+		}
 	}
 
 	printf("\n\nEncerrando Simulação\n\n");
