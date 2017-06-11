@@ -31,7 +31,13 @@
    as informações obtidas em cada teste, outra informação importante é o número de testes executados para diagnosticar um evento.<br>
 
    <h1>Algoritmo Broadcast</h1>
-   @descrever novas funcionalidades aqui.
+   O TP3 foi construído sobre o Algoritmo VCube, construído no TP2. A novidade, é que a partir de um ponto determinado,
+   a partir do arquivo de entrada com a regra B, um nodo inicia um Broadcast para a difusão de informações entre todos os nodos do sistema.
+   A distribuição de mensagens é feita utilizando a tabela CiS, de forma que cada nodo que recebe a mensagem transmite para o primeiro nodo
+   sem falha de cada próximo Cluster.
+
+   Para implementar isso, foi criado um novo evento na SMPL, chamado BROADCAST. Este evento indica que o nodo recebeu uma mensagem e que pode
+   precisar repeti-la para outros nodos.
    <hr>
    <h1>Geral</h1>
    Foram utilizadas como funções auxiliares as seguintes:

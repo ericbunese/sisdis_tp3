@@ -1,13 +1,13 @@
 /*
 
-  Trabalho Prático 1
+  Trabalho Prático 3
   Sistemas Distribuídos
-	Alunos: Eric Eduardo Bunese, Kaio Augusto de Camargo
-	Professor Elias P. Duarte Jr.
+		Alunos: Eric Eduardo Bunese, Kaio Augusto de Camargo
+		Professor Elias P. Duarte Jr.
 
-	Última edição feita em 17/05/2017
+		Última edição feita em 17/05/2017
 
-	Algoritmo VCube
+		Algoritmo VCube com Broadcast
 */
 
 #include <stdio.h>
@@ -299,20 +299,20 @@ int main(int argc, char * argv[])
 				int did_test = 0;
     			node_set *cis_teste = cis(token, nodo[token].current_cluster+1);
 
-				while(!did_test) 
+				while(!did_test)
 				{
 				    int st;
         			int token2 = cis_teste->nodes[nodo[token].current_node];
 					// Enquanto o nodo não achou o próximo nodo que deve testar,
 					// continua procurando o mesmo na tabela do cis.
-			        if(token != token2 && is_testador(token, token2)) 
+			        if(token != token2 && is_testador(token, token2))
 			        {
 			            testarNodo(token, token2, num_testes);
 			            did_test = 1;
 			        }
 			        nodo[token].current_node++;
 			        nodo[token].current_node %= cis_teste->size;
-			        if(nodo[token].current_node == 0) 
+			        if(nodo[token].current_node == 0)
 			        {
 			            // voltou ao começo, incrementa o cluster atual
 			            nodo[token].current_cluster++;
@@ -377,7 +377,7 @@ int main(int argc, char * argv[])
 				    	//Encontrou um nodo sem falha no cluster.
 				    	int alvo = cis_teste->nodes[i];
 				    	nodo[alvo].source_node = nodo[token].id;
-				    	nodo[alvo].cluster_index = j; 
+				    	nodo[alvo].cluster_index = j;
                         if(has_sent) printf(", ");
                         has_sent = 1;
                         printf("%d", alvo);
