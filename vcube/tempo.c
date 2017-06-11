@@ -231,7 +231,7 @@ void escalona_eventos(char* fname)
 					else if (strcmp(op, "B")==0)
 					{
 						printf("*Evento INICIAR BROADCAST escalonado para o nodo %d no tempo %5.1f\n", token, delay);
-						schedule(REPAIR, delay, token);
+						schedule(BROADCAST, delay, token);
 					}
 				}
 			}
@@ -350,27 +350,43 @@ int main(int argc, char * argv[])
 			break;
 
 			case BROADCAST:
-			{
+				if (status(nodo[token].id) != 0) break;
 				//O nodo X iniciou os broadcasts, transmitindo para os nodos [...]
-				int i;
-				node_set *cis_teste = cis(token, nodo[token].current_cluster+1);
-				//Encontra o primeiro nodo sem falha de cis
-				for (i=0; i<cis_teste->size && status(cis_teste->nodes[i]) != 0; ++i);
+                int i;
+				int j = (nodo[token].source_node != -1) ?
+                        nodo[token].cluster_index - 1 :
+                        num_clusters;
+                int has_sent = 0;
+                if(nodo[token].source_node == -1) {
+                    printf("* O nodo %d iniciou o broadcast no tempo %5.1f. Enviando para os nodos ", token, time());
+                } else {
+                    printf("* O nodo %d recebeu a mensagem no tempo %5.1f.", token, time());
+                    if(j <= 0) {
+                        printf("\n");
+                        break;
+                    }
+                    printf(" Enviando para os nodos ");
+                }
+                while(j > 0) {
+				    node_set *cis_teste = cis(token, j);
+				    //Encontra o primeiro nodo sem falha de cis
+				    for (i=0; i<cis_teste->size && is_node_faulty(token, cis_teste->nodes[i]); ++i);
 
-				if (i<cis_teste->size)
-				{
-					//Encontrou um nodo sem falha no cluster.
-					int alvo = cis_teste->nodes[i];
-					nodo[alvo].source_node = nodo[token].id;
-					nodo[alvo].cluster_index = 0; //@KAIO Qual o cluster de um nodo?
-					//O nodo alvo receberá a mensagem após um tempo fixo?
-					schedule(RECEIVE, 1.0, alvo);
-				}
-				else
-				{
-					//Não encontrou nodo sem falha no cluster.
-				}
-			}
+				    if (i<cis_teste->size)
+				    {
+				    	//Encontrou um nodo sem falha no cluster.
+				    	int alvo = cis_teste->nodes[i];
+				    	nodo[alvo].source_node = nodo[token].id;
+				    	nodo[alvo].cluster_index = j; 
+                        if(has_sent) printf(", ");
+                        has_sent = 1;
+                        printf("%d", alvo);
+				    	//O nodo alvo receberá a mensagem após um tempo fixo?
+				    	schedule(BROADCAST, 1.0, alvo);
+				    }
+                    j--;
+                }
+                printf(".\n");
 			break;
 		}
 	}
